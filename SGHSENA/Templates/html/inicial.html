@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horarios</title>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-6">
+  <h1 class="text-3xl font-bold mb-6 text-blue-600">📅 Horarios</h1>
+
+  <!-- Contenedor del calendario -->
+  <div id="calendar" class="bg-white rounded-xl shadow-xl p-4 w-full max-w-5xl"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        editable: true,
+        locale: 'es',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: [
+          { title: 'Reunión de equipo', start: '2025-11-06T10:00:00', end: '2025-11-06T11:00:00' },
+          { title: 'Clase de Python', start: '2025-11-08', allDay: true }
+        ],
+        dateClick: function(info) {
+          alert('Has hecho clic en: ' + info.dateStr);
+        }
+      });
+
+      calendar.render();
+    });
+  </script>
+</body>
+</html>

@@ -1,9 +1,7 @@
-from django.shortcuts import render
-from django.views.generic import TemplateView
-from Models.models import Jornadas
-# Create your views here.
-from django.views.generic import TemplateView
 
-class HomeView(TemplateView):
-    template_name="html/index.html"
+from django.shortcuts import render
+
+def calendario_view(request):
+    return render(request, 'html/inicio.html')
+
 

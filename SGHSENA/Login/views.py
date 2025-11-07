@@ -6,19 +6,19 @@ from django.contrib.auth import get_user_model
 
 Usuario = get_user_model()
 
-# ------------------------------------------------------------
+'''# ------------------------------------------------------------
 # 1️⃣ LOGIN DEL SUPERUSUARIO (solo Django admin)
 # ------------------------------------------------------------
-def login_admin_view(request):
+#def login_admin_view(request):
     """
     Este login es solo para el superusuario de Django.
     Usa username y password del administrador.
     """
     if request.method == 'POST':
-        username = request.POST.get('username')
+        numero_documento = request.POST.get('numero_documento')
         password = request.POST.get('password')
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, numero_documento=numero_documento, password=password)
 
         if user is not None and user.is_superuser:
             login(request, user)
@@ -67,4 +67,5 @@ def login_view(request):
         else:
             messages.error(request, 'Número de documento o contraseña incorrectos.')
 
-    return render(request, 'html/login-instructor/login.html')
+    return render(request, 'html/login-instructor/login.html')'''
+
