@@ -1,8 +1,9 @@
 # forms.py
 from django import forms
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from .models import Usuario
+from .models import Usuario, Instructores
 
 class UsuarioCreationForm(forms.ModelForm):
     password1 = forms.CharField(label='Contraseña', widget=forms.PasswordInput)
@@ -37,3 +38,24 @@ class UsuarioChangeForm(forms.ModelForm):
 
     def clean_password(self):
         return self.initial['password']
+
+class InstructoresAdminForm(forms.ModelForm):
+    class Meta:
+        model = Instructores
+        fields = '__all__'
+        error_messages = {
+            'user': {
+                'required': 'Debe seleccionar un usuario de tipo INSTRUCTOR.',
+                'unique':   'Este usuario ya está asignado como Instructor.',
+            }
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        user = cleaned.get('user')
+        if not user:
+            # mensaje claro cuando viene vacío
+            raise ValidationError({'user': 'Debe seleccionar un usuario de tipo INSTRUCTOR.'})
+        if getattr(user, 'tipo', None) != 'INSTRUCTOR':
+            raise ValidationError({'user': 'El usuario seleccionado no es de tipo INSTRUCTOR.'})
+        return cleaned

@@ -27,45 +27,37 @@ Usuario = get_user_model()
             messages.error(request, "Credenciales inválidas o no eres superusuario.")
 
     return render(request, 'html/login-admin/login.html')
-
+'''
 
 # ------------------------------------------------------------
 # 2️⃣ LOGIN GENERAL (Coordinador / Instructor)
 # ------------------------------------------------------------
 def login_view(request):
-    """
-    Login personalizado para usuarios con campo numero_documento.
-    Redirige según el tipo de usuario (COORDINADOR o INSTRUCTOR).
-    """
     if request.method == 'POST':
         numero_documento = request.POST.get('numero_documento')
         password = request.POST.get('password')
 
-        # ✅ Autenticamos directamente con numero_documento
-        user = authenticate(request, numero_documento=numero_documento, password=password)
+        # 👇 OJO: usa username=..., no numero_documento=...
+        user = authenticate(request, username=numero_documento, password=password)
 
         if user is not None:
             login(request, user)
 
-            # 🔹 Redirección según tipo
+            if user.is_superuser:
+                messages.success(request, f'Bienvenido Administrador {user.username}')
+                return redirect('/admin/')
+
+            if user.tipo == 'COORDINADOR':
+                messages.success(request, f'Bienvenido Coordinador {user.username}')
+                return redirect('dashboard_coordinador')
+
             if user.tipo == 'INSTRUCTOR':
                 messages.success(request, f'Bienvenido Instructor {user.username}')
                 return redirect('dashboard_instructor')
 
-            elif user.tipo == 'COORDINADOR':
-                messages.success(request, f'Bienvenido Coordinador {user.username}')
-                return redirect('dashboard_coordinador')
+            messages.warning(request, 'Usuario sin rol asignado.')
+            return redirect('home')
 
-            elif user.tipo == 'SUPERUSER':  # En caso de que también lo manejes por tipo
-                messages.success(request, f'Bienvenido Administrador {user.username}')
-                return redirect('/admin/')
+        messages.error(request, 'Número de documento o contraseña incorrectos.')
 
-            else:
-                messages.warning(request, 'Usuario sin rol asignado.')
-                return redirect('home')
-
-        else:
-            messages.error(request, 'Número de documento o contraseña incorrectos.')
-
-    return render(request, 'html/login-instructor/login.html')'''
-
+    return render(request, 'html/login-instructor/login.html')

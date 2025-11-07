@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.base_user import BaseUserManager
 from .managers import UsuarioManager
+from django.core.exceptions import ValidationError
+from django.conf import settings
 
 # ===============================================================
 # USER MANAGER PERSONALIZADO
@@ -206,23 +208,38 @@ class Roles(models.Model):
 # TABLA INSTRUCTORES
 # ===============================================================
 class Instructores(models.Model):
-    user = models.OneToOneField(Usuario, on_delete=models.CASCADE)
-
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='perfil_instructor',
+        null=False,
+        blank=False,
+        error_messages={
+            'null':  'Debe seleccionar un usuario de tipo INSTRUCTOR.',
+            'blank': 'Debe seleccionar un usuario de tipo INSTRUCTOR.',
+            'unique': 'Este usuario ya está asignado como Instructor.',
+        }
+    )
     numero_documento = models.BigIntegerField(
-        validators=[
-            MinValueValidator(1000000000),
-            MaxValueValidator(9999999999),
-        ]
+        validators=[MinValueValidator(1000000000), MaxValueValidator(9999999999)]
     )
     nombres = models.CharField(max_length=100)
     especialidad = models.CharField(max_length=100)
     id_perfil = models.ForeignKey(Perfiles, models.DO_NOTHING, db_column='id_perfil')
     es_lider = models.BooleanField(default=False)
 
+    def clean(self):
+        super().clean()
+        # user requerido con mensaje claro
+        if not self.user_id:
+            raise ValidationError({'user': 'Debe seleccionar un usuario de tipo INSTRUCTOR.'})
+
+        # coherencia: sólo permitir usuarios de tipo INSTRUCTOR
+        if getattr(self.user, 'tipo', None) != 'INSTRUCTOR':
+            raise ValidationError({'user': 'El usuario seleccionado no es de tipo INSTRUCTOR.'})
+
     class Meta:
         db_table = 'instructores'
-
-
 # ===============================================================
 # TABLA CONTRATOS
 # ===============================================================

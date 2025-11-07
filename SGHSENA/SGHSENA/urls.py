@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
     # Login del superusuario
-    path('login-admin/', login_views.login_admin_view, name='login_admin'),
+    #path('login-admin/', login_views.login_admin_view, name='login_admin'),
 
     # Login del personal (instructores y coordinadores)
     path('login/', login_views.login_view, name='login_personal'),

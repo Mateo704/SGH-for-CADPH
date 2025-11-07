@@ -1,5 +1,5 @@
+# managers.py
 from django.contrib.auth.base_user import BaseUserManager
-from django.core.exceptions import ValidationError
 
 class UsuarioManager(BaseUserManager):
     use_in_migrations = True
@@ -9,9 +9,8 @@ class UsuarioManager(BaseUserManager):
             raise ValueError("El usuario debe tener número de documento")
 
         user = self.model(numero_documento=numero_documento, **extra_fields)
-
-        # Ejecuta validaciones del modelo antes de guardar
-        user.full_clean(exclude={'password'})  # excluimos password aquí
+        # Valida reglas del modelo
+        user.full_clean(exclude={'password'})
         if password is None:
             user.set_unusable_password()
         else:
