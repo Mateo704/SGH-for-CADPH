@@ -1,0 +1,15 @@
+<h1>Panel de gestión</h1>
+<table>
+    <thead>
+        <tr><th>ID</th><th>Nombre</th><th>Día</th></tr>
+    </thead>
+    <tbody>
+        {% for j in jornadas %}
+        <tr>
+            <td>{{ j.id }}</td>
+            <td>{{ j.nombre }}</td>
+            <td>{{ j.dias_jornada }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
