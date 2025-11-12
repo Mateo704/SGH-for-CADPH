@@ -15,10 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.contrib.auth.decorators import login_required   # ✅ IMPORTANTE
+from django.shortcuts import render                         # ✅ IMPORTANTE
 from Login import views as login_views
 from Inicio.views import *
-
+from Login.urls import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
@@ -27,11 +29,10 @@ urlpatterns = [
 
     # Login del personal (instructores y coordinadores)
     path('login/', login_views.login_view, name='login_personal'),
-
-    # Paneles personalizados
-    
-    #path('panel-instructor/', login_required(lambda request: render(request, 'html/panel_instructor.html')), name='panel_instructor'),
-    #path('panel-coordinador/', login_required(lambda request: render(request, 'html/panel_coordinador.html')), name='panel_coordinador'),
+    path('Dashboard/', include('Dashboard.urls')),
+    # Paneles personalizados para instructores y coordinadores
+    #path('panel-instructor/', login_required(lambda request: render(request, 'html/login-instructor/panel_instructor.html')), name='panel_instructor'),
+    #path('panel-coordinador/', login_required(lambda request: render(request, 'html/login-coordinador/panel_coordinador.html')), name='panel_coordinador'),
 ]
 
 
