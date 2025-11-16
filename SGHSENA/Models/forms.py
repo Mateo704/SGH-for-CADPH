@@ -118,4 +118,4 @@ class InstructoresAdminForm(forms.ModelForm):
             instance.save()
         return instance
     class Media:
-        js=("js/instructores_autofill.js")
+        js=("admin/js/instructores_autofill.js")
