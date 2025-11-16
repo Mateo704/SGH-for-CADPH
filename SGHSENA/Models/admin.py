@@ -48,9 +48,20 @@ class InstructoresAdmin(admin.ModelAdmin):
             # Sólo usuarios activos y de tipo INSTRUCTOR
             kwargs['queryset'] = Usuario.objects.filter(is_active=True, tipo='INSTRUCTOR')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+@admin.register(Coordinadores)
+class CoordinadoresAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'numero_documento', 'user')
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'user':
+            kwargs["queryset"] = Usuario.objects.filter(
+                is_active=True,
+                tipo="COORDINADOR"
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # Registros simples (¡sin volver a registrar Instructores!)
-admin.site.register(Coordinadores)
+
 admin.site.register(Ambientes)
 admin.site.register(Competencias)
 admin.site.register(CompetenciasFichas)
