@@ -41,7 +41,7 @@ class UsuarioAdmin(BaseUserAdmin):
 class InstructoresAdmin(admin.ModelAdmin):
     form = InstructoresAdminForm
     list_display = ('nombres', 'numero_documento', 'especialidad', 'es_lider')
-    raw_id_fields = ('user', 'id_perfil')
+    raw_id_fields = ('id_perfil',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'user':
