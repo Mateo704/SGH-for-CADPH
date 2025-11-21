@@ -327,6 +327,31 @@ class Horarios(models.Model):
     class Meta:
         db_table = 'horarios'
 
+    def clean(self):
+        super().clean()
+
+        if self.hora_fin <= self.hora_inicio:
+            raise ValidationError({'hora_fin': 'La hora fin debe ser mayor que la hora inicio.'})
+
+        # Importar aquí para evitar ciclos si pones la función en otro archivo
+        from django.db.models import Q
+
+        qs = Horarios.objects.filter(
+            fecha=self.fecha,
+            hora_inicio__lt=self.hora_fin,
+            hora_fin__gt=self.hora_inicio,
+        ).filter(
+            Q(id_instructor=self.id_instructor) |
+            Q(id_ficha=self.id_ficha) |
+            Q(id_ambiente=self.id_ambiente)
+        )
+
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+
+        if qs.exists():
+            raise ValidationError('Existe un cruce de horario con otro registro.')
+
 
 class Coordinadores(models.Model):
     user = models.OneToOneField(Usuario, on_delete=models.CASCADE)

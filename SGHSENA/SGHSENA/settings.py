@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'Inicio',
     'Login',
     'Dashboard',
+    'consultas',
 ]
 
 MIDDLEWARE = [
