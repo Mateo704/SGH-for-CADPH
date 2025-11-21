@@ -211,7 +211,20 @@ class ProgramasFormacion(models.Model):
 
 
 class Jornadas(models.Model):
-    Dias_Semana = (
+    id_jornada = models.AutoField(primary_key=True)
+    nombre_jornada = models.CharField(max_length=50)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+
+    class Meta:
+        db_table = 'jornadas'
+
+    def __str__(self):
+        return self.nombre_jornada
+
+
+class JornadaDia(models.Model):
+    DIAS_SEMANA = (
         ('Lunes', 'Lunes'),
         ('Martes', 'Martes'),
         ('Miercoles', 'Miércoles'),
@@ -220,17 +233,20 @@ class Jornadas(models.Model):
         ('Sabado', 'Sábado'),
         ('Domingo', 'Domingo'),
     )
-    id_jornada = models.AutoField(primary_key=True)
-    nombre_jornada = models.CharField(max_length=50)
-    hora_inicio = models.TimeField()
-    dias_jornada = models.CharField(choices=Dias_Semana, max_length=20)
-    hora_fin = models.TimeField()
+
+    id = models.AutoField(primary_key=True)
+    jornada = models.ForeignKey(
+        Jornadas,
+        on_delete=models.CASCADE,
+        related_name='dias'
+    )
+    dia = models.CharField(max_length=20, choices=DIAS_SEMANA)
 
     class Meta:
-        db_table = 'jornadas'
+        db_table = 'jornadas_dias'
 
     def __str__(self):
-        return self.nombre_jornada
+        return f"{self.jornada.nombre_jornada} - {self.dia}"
 
 
 class Fichas(models.Model):

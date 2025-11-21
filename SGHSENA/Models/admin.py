@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Usuario, Instructores, Coordinadores, Ambientes, Competencias, CompetenciasFichas,
     Contratos, Fichas, Horarios, HorasCumplidas, Jornadas, NivelesFormacion,
-    Perfiles, ProgramasFormacion, ResultadosAprendizaje
+    Perfiles, ProgramasFormacion, ResultadosAprendizaje,JornadaDia
 )
 from .forms import UsuarioCreationForm, UsuarioChangeForm, InstructoresAdminForm
 from .forms import CustomAdminAuthForm
@@ -74,3 +74,4 @@ admin.site.register(NivelesFormacion)
 admin.site.register(Perfiles)
 admin.site.register(ProgramasFormacion)
 admin.site.register(ResultadosAprendizaje)
+admin.site.register(JornadaDia)

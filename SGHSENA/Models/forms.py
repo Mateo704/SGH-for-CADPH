@@ -117,5 +117,4 @@ class InstructoresAdminForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-    class Media:
-        js=("admin/js/instructores_autofill.js")
+
