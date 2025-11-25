@@ -174,7 +174,6 @@ class Instructores(models.Model):
 
 class Contratos(models.Model):
     id_contrato = models.AutoField(primary_key=True)
-    id_instructor = models.ForeignKey(Instructores, models.DO_NOTHING, db_column='id_instructor')
     tipo_contrato = models.CharField(max_length=50)
     horas_por_cumplir = models.IntegerField(default=0)
     fecha_inicio = models.DateField()
@@ -184,7 +183,7 @@ class Contratos(models.Model):
         db_table = 'contratos'
 
     def __str__(self):
-        return f"Contrato {self.id_contrato}"
+        return f"Contrato {self.id_contrato} - {self.tipo_contrato}"
 
 
 class NivelesFormacion(models.Model):
@@ -224,15 +223,6 @@ class Jornadas(models.Model):
 
 
 class JornadaDia(models.Model):
-    DIAS_SEMANA = (
-        ('Lunes', 'Lunes'),
-        ('Martes', 'Martes'),
-        ('Miercoles', 'Miércoles'),
-        ('Jueves', 'Jueves'),
-        ('Viernes', 'Viernes'),
-        ('Sabado', 'Sábado'),
-        ('Domingo', 'Domingo'),
-    )
 
     id = models.AutoField(primary_key=True)
     jornada = models.ForeignKey(
@@ -240,14 +230,32 @@ class JornadaDia(models.Model):
         on_delete=models.CASCADE,
         related_name='dias'
     )
-    dia = models.CharField(max_length=20, choices=DIAS_SEMANA)
-
+    Lunes = models.BooleanField(default=False)
+    Martes = models.BooleanField(default=False)
+    Miercoles = models.BooleanField(default=False)
+    Jueves = models.BooleanField(default=False)
+    Viernes = models.BooleanField(default=False)
+    Sabado = models.BooleanField(default=False)
+    Domingo = models.BooleanField(default=False) 
     class Meta:
         db_table = 'jornadas_dias'
 
     def __str__(self):
-        return f"{self.jornada.nombre_jornada} - {self.dia}"
-
+        # Creamos una lista con los días activos
+        dias_seleccionados = []
+        for dia in ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']:
+            if getattr(self, dia):  # Si el campo de ese día es True
+                dias_seleccionados.append(dia)
+        
+        # Retornamos el nombre de la jornada y los días seleccionados
+        return f"{self.jornada.nombre_jornada} - {', '.join(dias_seleccionados)}" if dias_seleccionados else f"{self.jornada.nombre_jornada} - Ningún día seleccionado"
+    
+    def dias_seleccionados(self):
+        dias = []
+        for dia in ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']:
+            if getattr(self, dia):
+                dias.append(dia)
+        return ", ".join(dias) if dias else "Ningún día seleccionado"
 
 class Fichas(models.Model):
     id_ficha = models.IntegerField(primary_key=True)

@@ -8,6 +8,7 @@ from .models import (
 )
 from .forms import UsuarioCreationForm, UsuarioChangeForm, InstructoresAdminForm
 from .forms import CustomAdminAuthForm
+from django import forms
 
 admin.site.login_form = CustomAdminAuthForm
 
@@ -59,6 +60,56 @@ class CoordinadoresAdmin(admin.ModelAdmin):
                 tipo="COORDINADOR"
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
+
+class JornadaDiaForm(forms.ModelForm):
+    class Meta:
+        model = JornadaDia
+        fields = ['jornada', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Añadir la previsualización de los días seleccionados al formulario
+        self.fields['dias_seleccionados'] = forms.CharField(
+            required=False,
+            widget=forms.TextInput(attrs={'readonly': 'readonly', 'style': 'background-color: #f1f1f1;'}),
+            label='Días seleccionados'
+        )
+        # Actualizar la previsualización cuando el formulario se inicializa
+        self.update_previsualizacion()
+
+    def update_previsualizacion(self):
+        dias = []
+        # Recorrer los días y agregar a la lista si están marcados como True
+        if self.instance.Lunes:
+            dias.append('Lunes')
+        if self.instance.Martes:
+            dias.append('Martes')
+        if self.instance.Miercoles:
+            dias.append('Miércoles')
+        if self.instance.Jueves:
+            dias.append('Jueves')
+        if self.instance.Viernes:
+            dias.append('Viernes')
+        if self.instance.Sabado:
+            dias.append('Sábado')
+        if self.instance.Domingo:
+            dias.append('Domingo')
+        
+        # Actualizamos el campo 'dias_seleccionados' con los días seleccionados
+        self.fields['dias_seleccionados'].initial = ', '.join(dias) if dias else "Ningún día seleccionado"
+
+@admin.register(JornadaDia)
+class JornadaDiaAdmin(admin.ModelAdmin):
+    form = JornadaDiaForm
+    list_display = ('jornada', 'dias_seleccionados')
+
+    # Definimos el método para acceder a 'dias_seleccionados'
+    def dias_seleccionados(self, obj):
+        # Llamamos al método del modelo para obtener los días seleccionados
+        return obj.dias_seleccionados()  # Llamamos al método 'dias_seleccionados' del modelo
+    dias_seleccionados.short_description = "Días seleccionados"  # Opcional: personaliza el nombre en el admin
+
 
 # Registros simples (¡sin volver a registrar Instructores!)
 
@@ -74,4 +125,4 @@ admin.site.register(NivelesFormacion)
 admin.site.register(Perfiles)
 admin.site.register(ProgramasFormacion)
 admin.site.register(ResultadosAprendizaje)
-admin.site.register(JornadaDia)
+

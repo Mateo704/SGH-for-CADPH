@@ -21,6 +21,7 @@ from django.shortcuts import render                         # ✅ IMPORTANTE
 from Login import views as login_views
 from Inicio.views import *
 from Login.urls import *
+from consultas.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
@@ -33,7 +34,5 @@ urlpatterns = [
     # Paneles personalizados para instructores y coordinadores
     #path('panel-instructor/', login_required(lambda request: render(request, 'html/login-instructor/panel_instructor.html')), name='panel_instructor'),
     #path('panel-coordinador/', login_required(lambda request: render(request, 'html/login-coordinador/panel_coordinador.html')), name='panel_coordinador'),
+    path('consultas/', Panel_administrativo.as_view(), name='panel')
 ]
-
-
-
