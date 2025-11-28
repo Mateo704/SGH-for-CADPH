@@ -1,6 +1,11 @@
 # managers.py
+
 from django.contrib.auth.base_user import BaseUserManager
 
+
+# ===============================================================
+# USER MANAGER PERSONALIZADO
+# ===============================================================
 class UsuarioManager(BaseUserManager):
     use_in_migrations = True
 
@@ -9,13 +14,10 @@ class UsuarioManager(BaseUserManager):
             raise ValueError("El usuario debe tener número de documento")
 
         user = self.model(numero_documento=numero_documento, **extra_fields)
-        # Valida reglas del modelo
-        user.full_clean(exclude={'password'})
         if password is None:
             user.set_unusable_password()
         else:
             user.set_password(password)
-
         user.save(using=self._db)
         return user
 
@@ -29,11 +31,7 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('tipo', 'COORDINADOR')
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('El superusuario debe tener is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('El superusuario debe tener is_superuser=True.')
         if not password:
             raise ValueError('El superusuario debe tener una contraseña.')
-
         return self._create_user(numero_documento, password, **extra_fields)
+

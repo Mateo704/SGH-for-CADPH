@@ -7,5 +7,5 @@ from django.views.generic import TemplateView
 class HomeView(TemplateView):
     template_name="html/index.html"
 
-class Ini(TemplateView):
-    template_name = "html/inicial.html"
+class HomeHours(TemplateView):
+    template_name = "html/home.html"

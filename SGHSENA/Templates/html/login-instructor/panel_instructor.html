@@ -1,9 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
-  <title>Panel del Instructor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Horario</title>
+  <style>
+    .schedule-grid {
+      grid-template-rows: repeat(18, 3rem);
+    }
+  </style>
 </head>
-<body>
-  <h2>Bienvenido, {{ request.user.username }}</h2>
+
+<body class="bg-green-100 p-6">
+
+  <!-- TARJETA DE FILTROS -->
+  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl m-3 mb-5 py-4 px-4">
+    <div>
+      <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Horarios</h1>
+    </div>
+
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 ">
+
+      <!-- AMBIENTE -->
+      <select name="ambiente" required class="border p-2 rounded">
+        <option value="">Ambiente</option>
+        {% for a in ambientes %}
+          <option value="{{ a.id_ambiente }}">{{ a.nombre_ambiente }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- COMPETENCIA -->
+      <select name="competencia" required class="border p-2 rounded">
+        <option value="">Competencia</option>
+        {% for c in competencias %}
+          <option value="{{ c.id_competencia }}">{{ c.nombre_competencia }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- FICHA -->
+      <select name="ficha" required class="border p-2 rounded">
+        <option value="">Ficha</option>
+        {% for f in fichas %}
+          <option value="{{ f.id_ficha }}">{{ f.id_ficha }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- INSTRUCTOR (solo instructor logueado) -->
+      <select class="border p-2 rounded bg-gray-200 cursor-not-allowed" disabled>
+        {% if instructor_logeado %}
+          <option value="{{ instructor_logeado.numero_documento }}" selected>
+            {{ instructor_logeado.nombres }}
+          </option>
+        {% else %}
+          <option value="">Sin instructor</option>
+        {% endif %}
+      </select>
+
+      <!-- Valor oculto para enviar el instructor -->
+      {% if instructor_logeado %}
+        <input type="hidden" name="instructor" value="{{ instructor_logeado.numero_documento }}">
+      {% endif %}
+
+      <!-- JORNADA -->
+      <select name="jornada" required class="border p-2 rounded">
+        <option value="">Jornada</option>
+        {% for j in jornadas %}
+          <option value="{{ j.id_jornada }}">{{ j.nombre_jornada }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- CATEGORÍA DEL PROGRAMA (NivelesFormacion) -->
+      <select name="categoria" required class="border p-2 rounded">
+        <option value="">Categoría del Programa</option>
+        {% for n in categoria %}
+          <option value="{{ n.id_nivel }}">{{ n.nombre_nivel }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- FECHA -->
+      <input type="date" name="fecha" class="border p-2 rounded">
+
+      <!-- BOTÓN -->
+      <button class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded">
+        Filtrar
+      </button>
+
+    </form>
+  </div>
+
+  <!-- TABLA DE HORARIO -->
+  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden">
+
+    <!-- ENCABEZADO -->
+    <div class="grid grid-cols-7 text-center bg-gray-200 font-semibold py-3">
+      <div class="px-3">&nbsp;</div>
+      <div>Lunes</div>
+      <div>Martes</div>
+      <div>Miércoles</div>
+      <div>Jueves</div>
+      <div>Viernes</div>
+      <div>Sábado</div>
+    </div>
+
+    <!-- CUERPO -->
+    <div class="grid grid-cols-7 schedule-grid border-t border-gray-300">
+
+      <!-- COLUMNA DE HORAS -->
+      <div class="col-span-1 border-r border-gray-300 bg-gray-50">
+        <div id="hours" class="flex flex-col text-sm">
+        </div>
+      </div>
+
+      <!-- COLUMNAS DE DÍAS -->
+      <div class="col-span-6 grid grid-cols-6" id="days-container"></div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    // Generar horas desde 6:00 hasta 23:00
+    const hoursContainer = document.getElementById('hours');
+    const hours = [];
+
+    for (let h = 6; h <= 23; h++) {
+      const display = h === 12 ? '12:00 PM' :
+        (h < 12 ? `${h}:00 AM` : `${h - 12}:00 PM`);
+      hours.push(display);
+    }
+
+    hours.forEach(h => {
+      const div = document.createElement('div');
+      div.className = 'p-2 border-b h-12 flex items-center';
+      div.textContent = h;
+      hoursContainer.appendChild(div);
+    });
+
+    // Generar las 6 columnas de los días
+    const daysColsContainer = document.getElementById('days-container');
+
+    for (let c = 0; c < 6; c++) {
+      const col = document.createElement('div');
+      col.className = 'grid';
+      col.style.gridTemplateRows = 'repeat(18, 3rem)';
+
+      for (let r = 0; r < 18; r++) {
+        const cell = document.createElement('div');
+        cell.className = 'border border-gray-200 hover:bg-blue-50 cursor-pointer flex items-center justify-center';
+        cell.dataset.day = c;
+        cell.dataset.hour = 6 + r;
+
+        cell.addEventListener('click', () => {
+          cell.classList.toggle('bg-blue-200');
+        });
+
+        col.appendChild(cell);
+      }
+
+      daysColsContainer.appendChild(col);
+    }
+  </script>
+
 </body>
 </html>

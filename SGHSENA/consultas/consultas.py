@@ -3,6 +3,7 @@ from django.db.models import Q
 
 
 
+
 def buscar_choques(fecha, hora_inicio, hora_fin, instructor=None, ficha=None, ambiente=None, horario_id=None):
     """
     Devuelve los Horarios que se cruzan con el bloque [hora_inicio, hora_fin)

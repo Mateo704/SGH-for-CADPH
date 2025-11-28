@@ -31,6 +31,7 @@ urlpatterns = [
     # Login del personal (instructores y coordinadores)
     path('login/', login_views.login_view, name='login_personal'),
     path('Dashboard/', include('Dashboard.urls')),
+    path('home/', HomeHours.as_view(), name="homehours"),
     # Paneles personalizados para instructores y coordinadores
     #path('panel-instructor/', login_required(lambda request: render(request, 'html/login-instructor/panel_instructor.html')), name='panel_instructor'),
     #path('panel-coordinador/', login_required(lambda request: render(request, 'html/login-coordinador/panel_coordinador.html')), name='panel_coordinador'),
