@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
-    Usuario, Instructores, Coordinadores, Ambientes, Competencias, CompetenciasFichas,
+    Usuario, Instructores, Coordinadores, Ambientes, Competencias,
     Contratos, Fichas, Horarios, HorasCumplidas, Jornadas, NivelesFormacion,
     Perfiles, ProgramasFormacion, ResultadosAprendizaje,JornadaDia
 )
@@ -41,8 +41,9 @@ class UsuarioAdmin(BaseUserAdmin):
 @admin.register(Instructores)
 class InstructoresAdmin(admin.ModelAdmin):
     form = InstructoresAdminForm
-    list_display = ('nombres', 'numero_documento', 'especialidad', 'es_lider')
-    raw_id_fields = ('id_perfil',)
+    #list_display = ('especialidad', 'es_lider')
+    list_display=['es_lider']
+    #raw_id_fields = ('id_perfil',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'user':
@@ -51,7 +52,9 @@ class InstructoresAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 @admin.register(Coordinadores)
 class CoordinadoresAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'numero_documento', 'user')
+    #list_display = ('nombre', 'numero_documento', 'user')
+    #list_display = ('nombre', 'user')
+    list_display = ['user']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'user':
@@ -115,7 +118,7 @@ class JornadaDiaAdmin(admin.ModelAdmin):
 
 admin.site.register(Ambientes)
 admin.site.register(Competencias)
-admin.site.register(CompetenciasFichas)
+#admin.site.register(CompetenciasFichas)
 admin.site.register(Contratos)
 admin.site.register(Fichas)
 admin.site.register(Horarios)

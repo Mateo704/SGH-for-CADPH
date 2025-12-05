@@ -1,167 +1,371 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>Horario</title>
+  <title>Panel Instructor - Horario</title>
   <style>
-    .schedule-grid {
-      grid-template-rows: repeat(18, 3rem);
+    :root {
+      --start-hour: 6;
+      --end-hour: 23;
+      --minutes-per-pixel: 0.66666667; /* 1 pixel = 1.5 minutes (=> 30min = 20px) */
+      /* Ajusta: pixels per minute = rowHeight / 30. Aquí rowHeight=40 => 40/30=1.333 -> we chose 0.666 to reduce size.
+         Puedes experimentar. */
+      --row-height-30min: 30px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: 120px repeat(6, 1fr);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #edf2f7;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 600;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .hours {
+      background: #fbfbfb;
+      border-right: 1px solid #e6e6e6;
+    }
+
+    .hours .slot {
+      height: calc(( (var(--end-hour) - var(--start-hour)) * 60 ) * var(--minutes-per-pixel) / ((var(--end-hour)-var(--start-hour))*60) * 30px); /* fallback */
+    }
+
+    /* column container */
+    .day-column {
+      position: relative;
+      min-height: calc(((var(--end-hour) - var(--start-hour)) * 60) * var(--minutes-per-pixel));
+      border-right: 1px solid #edeff2;
+      background: white;
+    }
+
+    /* mark every 30min line */
+    .time-mark {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #f3f3f3;
+      pointer-events: none;
+    }
+
+    .time-label {
+      height: calc(30px); /* visual only */
+      display:flex;
+      align-items:center;
+      padding-left: 8px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #f3f3f3;
+      color: #374151;
+    }
+
+    .event {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: #0f172a;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .event small {
+      display:block;
+      font-weight:400;
+      font-size:12px;
+      opacity:0.9;
+    }
+
+    .legend {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .legend .item {
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .legend .swatch {
+      width:14px;
+      height:14px;
+      border-radius:3px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.05) inset;
     }
   </style>
 </head>
+<body class="bg-green-50 p-6">
+  <div class="max-w-7xl mx-auto">
 
-<body class="bg-green-100 p-6">
+    <div class="bg-white p-4 rounded-md shadow mb-4">
+      <h1 class="text-xl font-bold mb-3">Panel Instructor - Horario</h1>
 
-  <!-- TARJETA DE FILTROS -->
-  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl m-3 mb-5 py-4 px-4">
-    <div>
-      <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Horarios</h1>
-    </div>
-
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 ">
-
-      <!-- AMBIENTE -->
-      <select name="ambiente" required class="border p-2 rounded">
-        <option value="">Ambiente</option>
-        {% for a in ambientes %}
-          <option value="{{ a.id_ambiente }}">{{ a.nombre_ambiente }}</option>
-        {% endfor %}
-      </select>
-
-      <!-- COMPETENCIA -->
-      <select name="competencia" required class="border p-2 rounded">
-        <option value="">Competencia</option>
-        {% for c in competencias %}
-          <option value="{{ c.id_competencia }}">{{ c.nombre_competencia }}</option>
-        {% endfor %}
-      </select>
-
-      <!-- FICHA -->
-      <select name="ficha" required class="border p-2 rounded">
-        <option value="">Ficha</option>
-        {% for f in fichas %}
-          <option value="{{ f.id_ficha }}">{{ f.id_ficha }}</option>
-        {% endfor %}
-      </select>
-
-      <!-- INSTRUCTOR (solo instructor logueado) -->
-      <select class="border p-2 rounded bg-gray-200 cursor-not-allowed" disabled>
-        {% if instructor_logeado %}
-          <option value="{{ instructor_logeado.numero_documento }}" selected>
-            {{ instructor_logeado.nombres }}
-          </option>
-        {% else %}
-          <option value="">Sin instructor</option>
-        {% endif %}
-      </select>
-
-      <!-- Valor oculto para enviar el instructor -->
-      {% if instructor_logeado %}
-        <input type="hidden" name="instructor" value="{{ instructor_logeado.numero_documento }}">
-      {% endif %}
-
-      <!-- JORNADA -->
-      <select name="jornada" required class="border p-2 rounded">
-        <option value="">Jornada</option>
-        {% for j in jornadas %}
-          <option value="{{ j.id_jornada }}">{{ j.nombre_jornada }}</option>
-        {% endfor %}
-      </select>
-
-      <!-- CATEGORÍA DEL PROGRAMA (NivelesFormacion) -->
-      <select name="categoria" required class="border p-2 rounded">
-        <option value="">Categoría del Programa</option>
-        {% for n in categoria %}
-          <option value="{{ n.id_nivel }}">{{ n.nombre_nivel }}</option>
-        {% endfor %}
-      </select>
-
-      <!-- FECHA -->
-      <input type="date" name="fecha" class="border p-2 rounded">
-
-      <!-- BOTÓN -->
-      <button class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded">
-        Filtrar
-      </button>
-
-    </form>
-  </div>
-
-  <!-- TABLA DE HORARIO -->
-  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden">
-
-    <!-- ENCABEZADO -->
-    <div class="grid grid-cols-7 text-center bg-gray-200 font-semibold py-3">
-      <div class="px-3">&nbsp;</div>
-      <div>Lunes</div>
-      <div>Martes</div>
-      <div>Miércoles</div>
-      <div>Jueves</div>
-      <div>Viernes</div>
-      <div>Sábado</div>
-    </div>
-
-    <!-- CUERPO -->
-    <div class="grid grid-cols-7 schedule-grid border-t border-gray-300">
-
-      <!-- COLUMNA DE HORAS -->
-      <div class="col-span-1 border-r border-gray-300 bg-gray-50">
-        <div id="hours" class="flex flex-col text-sm">
+      <form id="filters" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+        <div>
+          <label class="block text-sm font-medium">Ambiente</label>
+          <select name="ambiente" id="f-ambiente" class="border p-2 rounded w-full">
+            <option value="">Todos</option>
+            {% for a in ambientes %}
+              <option value="{{ a.id_ambiente }}">{{ a.nombre_ambiente }}</option>
+            {% endfor %}
+          </select>
         </div>
+
+        <div>
+          <label class="block text-sm font-medium">Competencia</label>
+          <select name="competencia" id="f-competencia" class="border p-2 rounded w-full">
+            <option value="">Todas</option>
+            {% for c in competencias %}
+              <option value="{{ c.id_competencia }}">{{ c.nombre_competencia }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Ficha</label>
+          <select name="ficha" id="f-ficha" class="border p-2 rounded w-full">
+            <option value="">Todas</option>
+            {% for f in fichas %}
+              <option value="{{ f.id_ficha }}">{{ f.id_ficha }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Jornada</label>
+          <select name="jornada" id="f-jornada" class="border p-2 rounded w-full">
+            <option value="">Todas</option>
+            {% for j in jornadas %}
+              <option value="{{ j.id_jornada }}">{{ j.nombre_jornada }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Fecha</label>
+          <input type="date" id="f-fecha" name="fecha" class="border p-2 rounded w-full">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Instructor</label>
+          <input class="border p-2 rounded w-full bg-gray-100 cursor-not-allowed" disabled
+                 value="{% if instructor_logeado %}{{ instructor_logeado.nombres }}{% else %}Sin instructor{% endif %}">
+          {% if instructor_logeado %}
+            <input type="hidden" name="instructor" value="{{ instructor_logeado.numero_documento }}">
+          {% endif %}
+        </div>
+
+      </form>
+
+      <div class="mt-3 flex gap-2">
+        <button id="btn-apply" class="bg-blue-600 text-white px-4 py-2 rounded">Aplicar filtros</button>
+        <button id="btn-reset" class="bg-gray-200 px-4 py-2 rounded">Limpiar</button>
       </div>
-
-      <!-- COLUMNAS DE DÍAS -->
-      <div class="col-span-6 grid grid-cols-6" id="days-container"></div>
-
     </div>
+
+    <!-- LEGEND -->
+    <div id="legend-wrap" class="bg-white p-3 rounded shadow mb-4">
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="bg-white rounded shadow">
+      <div class="calendar">
+
+        <!-- Hora columna -->
+        <div class="p-2 header" style="height:56px;">HORAS</div>
+
+        <!-- Encabezados días -->
+        <div class="header">Lunes</div>
+        <div class="header">Martes</div>
+        <div class="header">Miércoles</div>
+        <div class="header">Jueves</div>
+        <div class="header">Viernes</div>
+        <div class="header">Sábado</div>
+
+        <!-- Column horas (labels) -->
+        <div class="hours p-2" id="hours-column" style="min-height: calc(((23 - 6) * 60) * 0.66666667px);">
+          <!-- Labels se generan con JS -->
+        </div>
+
+        <!-- Columnas de días: cada una es un container relativo donde se posicionan events -->
+        <div class="day-column" id="col-0"></div>
+        <div class="day-column" id="col-1"></div>
+        <div class="day-column" id="col-2"></div>
+        <div class="day-column" id="col-3"></div>
+        <div class="day-column" id="col-4"></div>
+        <div class="day-column" id="col-5"></div>
+
+      </div>
+    </div>
+
   </div>
 
-  <!-- SCRIPT -->
-  <script>
-    // Generar horas desde 6:00 hasta 23:00
-    const hoursContainer = document.getElementById('hours');
-    const hours = [];
+<script>
+(() => {
+  // Configuración
+  const START_HOUR = 6;
+  const END_HOUR = 23;
+  const PIXELS_PER_MINUTE = 1; // 1px por minuto -> 30min = 30px (ajusta si quieres más compacto)
+  const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const apiUrl = "{% url 'dashboard:horarios_json' %}";
 
-    for (let h = 6; h <= 23; h++) {
-      const display = h === 12 ? '12:00 PM' :
-        (h < 12 ? `${h}:00 AM` : `${h - 12}:00 PM`);
-      hours.push(display);
+  // Referencias DOM
+  const btnApply = document.getElementById('btn-apply');
+  const btnReset = document.getElementById('btn-reset');
+  const fAmb = document.getElementById('f-ambiente');
+  const fComp = document.getElementById('f-competencia');
+  const fFicha = document.getElementById('f-ficha');
+  const fJor = document.getElementById('f-jornada');
+  const fFecha = document.getElementById('f-fecha');
+
+  const cols = [];
+  for (let i=0;i<6;i++) cols.push(document.getElementById('col-'+i));
+  const hoursCol = document.getElementById('hours-column');
+  const legendWrap = document.getElementById('legend');
+
+  // Generar marcas de tiempo y altura de columnas
+  const totalMinutes = (END_HOUR - START_HOUR) * 60;
+  const containerHeight = totalMinutes * PIXELS_PER_MINUTE;
+  cols.forEach(c => c.style.minHeight = containerHeight + 'px');
+  hoursCol.style.minHeight = containerHeight + 'px';
+
+  // Dibujar etiquetas de hora cada 30 min (en columna horas)
+  function drawTimeLabels() {
+    hoursCol.innerHTML = '';
+    for (let m = 0; m <= totalMinutes; m += 30) {
+      const minutesFromStart = m;
+      const hour = START_HOUR + Math.floor(minutesFromStart / 60);
+      const minute = minutesFromStart % 60;
+      const label = document.createElement('div');
+      label.className = 'time-label';
+      const display = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+      label.textContent = display;
+      label.style.position = 'absolute';
+      label.style.top = (minutesFromStart * PIXELS_PER_MINUTE - 10) + 'px';
+      hoursCol.appendChild(label);
+
+      // Add thin line marker
+      const mark = document.createElement('div');
+      mark.className = 'time-mark';
+      mark.style.top = (minutesFromStart * PIXELS_PER_MINUTE) + 'px';
+      hoursCol.appendChild(mark);
     }
+  }
 
-    hours.forEach(h => {
-      const div = document.createElement('div');
-      div.className = 'p-2 border-b h-12 flex items-center';
-      div.textContent = h;
-      hoursContainer.appendChild(div);
+  drawTimeLabels();
+
+  // Helper para limpiar columnas
+  function clearCols() {
+    cols.forEach(c => c.innerHTML = '');
+    legendWrap.innerHTML = '';
+  }
+
+  // Pintar eventos en el calendario
+  function paintEvents(eventos) {
+    clearCols();
+    // construir leyenda por competencia
+    const legendMap = {};
+    eventos.forEach(ev => {
+      legendMap[ev.competencia_id] = {
+        name: ev.competencia,
+        color: ev.color
+      };
     });
 
-    // Generar las 6 columnas de los días
-    const daysColsContainer = document.getElementById('days-container');
+    // pintar leyenda
+    Object.keys(legendMap).forEach(k => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      const sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.style.background = legendMap[k].color;
+      const txt = document.createElement('div');
+      txt.textContent = legendMap[k].name;
+      item.appendChild(sw);
+      item.appendChild(txt);
+      legendWrap.appendChild(item);
+    });
 
-    for (let c = 0; c < 6; c++) {
-      const col = document.createElement('div');
-      col.className = 'grid';
-      col.style.gridTemplateRows = 'repeat(18, 3rem)';
+    // pintar eventos
+    eventos.forEach(ev => {
+      const dayIndex = ev.dia_index; // 0..5
+      if (dayIndex < 0 || dayIndex > 5) return;
 
-      for (let r = 0; r < 18; r++) {
-        const cell = document.createElement('div');
-        cell.className = 'border border-gray-200 hover:bg-blue-50 cursor-pointer flex items-center justify-center';
-        cell.dataset.day = c;
-        cell.dataset.hour = 6 + r;
+      const startParts = ev.hora_inicio.split(':').map(x => parseInt(x,10));
+      const endParts = ev.hora_fin.split(':').map(x => parseInt(x,10));
+      const startMinutes = (startParts[0] - START_HOUR) * 60 + startParts[1];
+      const endMinutes = (endParts[0] - START_HOUR) * 60 + endParts[1];
 
-        cell.addEventListener('click', () => {
-          cell.classList.toggle('bg-blue-200');
-        });
+      const top = Math.max(0, startMinutes * PIXELS_PER_MINUTE);
+      const height = Math.max(8, (endMinutes - startMinutes) * PIXELS_PER_MINUTE);
 
-        col.appendChild(cell);
-      }
+      const div = document.createElement('div');
+      div.className = 'event';
+      div.style.top = top + 'px';
+      div.style.height = height + 'px';
+      div.style.background = ev.color;
+      div.innerHTML = `<div>${ev.competencia} <small>${ev.ambiente} · Ficha ${ev.ficha}</small></div>
+                       <small>${ev.fecha} • ${ev.hora_inicio} - ${ev.hora_fin}</small>`;
 
-      daysColsContainer.appendChild(col);
+      cols[dayIndex].appendChild(div);
+    });
+  }
+
+  // Fetch eventos con filtros
+  async function fetchAndPaint() {
+    const params = new URLSearchParams();
+    if (fAmb.value) params.append('ambiente', fAmb.value);
+    if (fComp.value) params.append('competencia', fComp.value);
+    if (fFicha.value) params.append('ficha', fFicha.value);
+    if (fJor.value) params.append('jornada', fJor.value);
+    if (fFecha.value) params.append('fecha', fFecha.value);
+
+    const url = apiUrl + '?' + params.toString();
+    const res = await fetch(url, {credentials: 'same-origin'});
+    if (!res.ok) {
+      console.error('Error al obtener eventos', res.statusText);
+      return;
     }
-  </script>
+    const data = await res.json();
+    if (data.eventos) {
+      paintEvents(data.eventos);
+    }
+  }
 
+  // Handlers
+  btnApply.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetchAndPaint();
+  });
+  btnReset.addEventListener('click', (e) => {
+    e.preventDefault();
+    fAmb.value = '';
+    fComp.value = '';
+    fFicha.value = '';
+    fJor.value = '';
+    fFecha.value = '';
+    fetchAndPaint();
+  });
+
+  // carga inicial: trae todos los horarios del instructor
+  fetchAndPaint();
+
+})();
+</script>
 </body>
 </html>

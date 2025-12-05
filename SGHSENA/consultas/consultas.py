@@ -32,6 +32,7 @@ def buscar_choques(fecha, hora_inicio, hora_fin, instructor=None, ficha=None, am
 
     return qs
 
+
 def horario_instructor_dia(instructor, fecha):
     return Horarios.objects.filter(
         id_instructor=instructor,
@@ -58,7 +59,7 @@ def horario_por_jornada(jornada):
     ).select_related('id_ficha', 'id_instructor', 'id_ambiente', 'id_competencia').order_by('fecha', 'hora_inicio')
 
 
-
+#Realizo consulta
 def ambientes_disponibles(fecha, hora_inicio, hora_fin):
     ocupados = Horarios.objects.filter(
         fecha=fecha,
@@ -69,7 +70,7 @@ def ambientes_disponibles(fecha, hora_inicio, hora_fin):
     return Ambientes.objects.exclude(id_ambiente__in=ocupados)
 
 
-
+#Realizo consulta
 def instructores_disponibles(fecha, hora_inicio, hora_fin):
     ocupados = Horarios.objects.filter(
         fecha=fecha,

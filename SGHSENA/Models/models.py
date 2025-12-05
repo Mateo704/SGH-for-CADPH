@@ -4,16 +4,15 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.conf import settings
-from .managers import *
+from .managers import UsuarioManager
 
 # ===============================================================
 # MODELO DE USUARIO PRINCIPAL
 # ===============================================================
-numero_10_digitos = RegexValidator(
-    regex=r'^\d{10}$',
-    message='El número de documento debe tener exactamente 10 dígitos.'
+numero_7_a_10_digitos = RegexValidator(
+    regex=r'^\d{7,10}$',
+    message='El número de documento debe tener entre 7 y 10 dígitos.'
 )
-
 class Usuario(AbstractUser):
     first_name = None
     last_name = None
@@ -24,11 +23,11 @@ class Usuario(AbstractUser):
         'N° de documento',
         unique=True,
         validators=[
-            MinValueValidator(1000000000),
+            MinValueValidator(1000000),
             MaxValueValidator(9999999999),
-            numero_10_digitos,
+            numero_7_a_10_digitos,
         ],
-        help_text='Exactamente 10 dígitos.'
+        help_text='De 7 a 10 digitos'
     )
 
     TIPO_CHOICES = (
@@ -68,8 +67,8 @@ class Usuario(AbstractUser):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=Q(numero_documento__gte=1000000000) & Q(numero_documento__lte=9999999999),
-                name='usuario_numero_documento_10_digitos_rango'
+                check=Q(numero_documento__gte=1000000) & Q(numero_documento__lte=9999999999),
+                name='usuario_numero_documento_7_a_10_digitos_rango'
             ),
             models.CheckConstraint(
                 check=Q(is_superuser=False) | Q(is_staff=True),
@@ -80,7 +79,6 @@ class Usuario(AbstractUser):
                 name='usuario_staff_tipo_coordinador'
             ),
         ]
-
 
 # ===============================================================
 # TABLAS RELACIONADAS
@@ -93,9 +91,9 @@ class Ambientes(models.Model):
         db_table = 'ambientes'
 
     def __str__(self):
-        return self.nombre_ambiente
+        return self.id_ambiente + " - " + self.nombre_ambiente 
 
-
+#Perfiles de las competencias
 class Perfiles(models.Model):
     id_perfil = models.AutoField(primary_key=True)
     nombre_perfil = models.CharField(max_length=100)
@@ -121,14 +119,9 @@ class Instructores(models.Model):
             'unique': 'Este usuario ya está asignado como Instructor.',
         }
     )
-    numero_documento = models.BigIntegerField(
-        validators=[MinValueValidator(1000000000), MaxValueValidator(9999999999)]
-    )
-    nombres = models.CharField(max_length=100)
-    especialidad = models.CharField(max_length=100)
-    id_perfil = models.ForeignKey(Perfiles, models.DO_NOTHING, db_column='id_perfil')
+    profesion = models.CharField(max_length=400)
     es_lider = models.BooleanField(default=False)
-
+    
     def clean(self):
         super().clean()
         if not self.user_id:
@@ -156,7 +149,6 @@ class Contratos(models.Model):
     def __str__(self):
         return f"Contrato {self.id_contrato} - {self.tipo_contrato}"
 
-
 class NivelesFormacion(models.Model):
     id_nivel = models.AutoField(primary_key=True)
     nombre_nivel = models.CharField(max_length=50)
@@ -179,6 +171,8 @@ class ProgramasFormacion(models.Model):
     def __str__(self):
         return self.nombre_programa
 
+    def competencias_del_programa(self):
+        return self.competencias.filter(es_trasversal=False)
 
 class Jornadas(models.Model):
     id_jornada = models.AutoField(primary_key=True)
@@ -229,14 +223,22 @@ class JornadaDia(models.Model):
         return ", ".join(dias) if dias else "Ningún día seleccionado"
 
 class Fichas(models.Model):
+    Choise_modalidades= (
+        ("Presencial", 1),
+        ("Virtual", 2),
+        ("Hividro", 3),        
+    )
     id_ficha = models.IntegerField(primary_key=True)
     id_programa = models.ForeignKey(ProgramasFormacion, models.DO_NOTHING, db_column='id_programa')
     id_instructor_lider = models.ForeignKey(Instructores, models.DO_NOTHING, db_column='id_instructor_lider')
     id_ambiente = models.ForeignKey(Ambientes, models.DO_NOTHING, db_column='id_ambiente')
     id_jornada = models.ForeignKey(Jornadas, models.DO_NOTHING, db_column='id_jornada')
     fecha_inicio = models.DateField()
-    modalidad = models.CharField(max_length=50)
-
+    modalidad =  models.CharField(
+        max_length=50,
+        choices=Choise_modalidades,
+        default="Presencial"
+    )
     class Meta:
         db_table = 'fichas'
 
@@ -247,15 +249,43 @@ class Fichas(models.Model):
 class Competencias(models.Model):
     id_competencia = models.AutoField(primary_key=True)
     nombre_competencia = models.CharField(max_length=150)
-    programa_relacionado = models.CharField(max_length=100)
     horas = models.IntegerField(default=0)
-    id_perfil = models.ForeignKey(Perfiles, models.DO_NOTHING, db_column='id_perfil')
+
+    programa_relacionado = models.ForeignKey(
+        ProgramasFormacion,
+        on_delete=models.CASCADE,
+        related_name="competencias",
+        null=True,   # permite competencias sin programa
+        blank=True   # usadas para transversales
+    )
+
+    es_trasversal = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'competencias'
 
+
     def __str__(self):
         return self.nombre_competencia
+    
+
+'''class Profesion(models.Model):
+    id_profesion = models.AutoField(primary_key=True)
+    nombre_profesion = models.CharField(max_length=100)
+
+    # Relación muchos a muchos con Competencias
+    competencias = models.ManyToManyField(
+        Competencias,
+        related_name='profesiones',   # para acceder desde Competencias.prof
+        blank=True
+    )
+
+    class Meta:
+        db_table = 'profesiones'
+
+    def __str__(self):
+        return self.nombre_profesion'''
+
 
 
 class ResultadosAprendizaje(models.Model):
@@ -271,15 +301,14 @@ class ResultadosAprendizaje(models.Model):
         return self.nombre_resultado
 
 
-class CompetenciasFichas(models.Model):
+'''class CompetenciasFichas(models.Model):
     id_comp_ficha = models.AutoField(primary_key=True)
-    id_ficha = models.ForeignKey(Fichas, models.DO_NOTHING, db_column='id_ficha')
     id_competencia = models.ForeignKey(Competencias, models.DO_NOTHING, db_column='id_competencia')
     carril = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'competencias_fichas'
-
+'''
 
 class HorasCumplidas(models.Model):
     id_registro = models.AutoField(primary_key=True)
@@ -333,17 +362,28 @@ class Horarios(models.Model):
 
 
 class Coordinadores(models.Model):
-    user = models.OneToOneField(Usuario, on_delete=models.CASCADE)
-    nombre = models.CharField(max_length=50)
-    numero_documento = models.BigIntegerField(
-        validators=[
-            MinValueValidator(1000000000),
-            MaxValueValidator(9999999999),
-        ]
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='perfil_coordinador',
+        null=False,
+        blank=False,
+        error_messages={
+            'null':  'Debe seleccionar un usuario de tipo COORDINADOR.',
+            'blank': 'Debe seleccionar un usuario de tipo COORDINADOR.',
+            'unique': 'Este usuario ya está asignado como COORDINADOR.',
+        }
     )
 
     class Meta:
         db_table = 'coordinadores'
 
+    def clean(self):
+        if self.user.tipo != "COORDINADOR":
+            raise ValidationError({
+                "user": "El usuario seleccionado debe ser de tipo COORDINADOR."
+            })
+
     def __str__(self):
-        return self.nombre
+        return f"{self.user.username} - {self.user.numero_documento}"
+ 

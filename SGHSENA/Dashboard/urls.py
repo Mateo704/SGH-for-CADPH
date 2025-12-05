@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import DashboardInstructorView, DashboardCoordinadorView
-
+from . import views
 app_name = 'dashboard'
 
 urlpatterns = [
-    path('instructor/', DashboardInstructorView.as_view(), name='dashboard_instructor'),
-    path('coordinador/', DashboardCoordinadorView.as_view(), name='dashboard_coordinador'),
+    path("instructor/", views.dashboard_instructor, name="dashboard_instructor"),
+    path("api/horarios/", views.horarios_json, name="horarios_json"),
+    
 ]
